@@ -1,0 +1,76 @@
+#include <stdio.h>
+#include <stdbool.h>
+
+#define MAX_PROCESSES 10
+
+struct process {
+    int pid;
+    int arrival_time;
+    int burst_time;
+    int remaining_time;
+};
+
+struct process processes[MAX_PROCESSES];
+int num_processes;
+
+int find_shortest_remaining_process(int current_time) {
+    int shortest_time = -1;
+    int shortest_pid = -1;
+
+    for (int i = 0; i < num_processes; i++) {
+        if (processes[i].arrival_time <= current_time && processes[i].remaining_time > 0) {
+            if (shortest_time == -1 || processes[i].remaining_time < shortest_time) {
+                shortest_time = processes[i].remaining_time;
+                shortest_pid = processes[i].pid;
+            }
+        }
+    }
+
+    return shortest_pid;
+}
+
+void run_srpt_algorithm() {
+    int current_time = 0;
+    int completed_processes = 0;
+    int waiting_time = 0;
+    int turnaround_time = 0;
+
+    while (completed_processes < num_processes) {
+        int pid = find_shortest_remaining_process(current_time);
+        if (pid == -1) {
+            current_time++;
+            continue;
+        }
+
+        processes[pid].remaining_time--;
+        if (processes[pid].remaining_time == 0) {
+            completed_processes++;
+            int finish_time = current_time + 1;
+            int turnaround = finish_time - processes[pid].arrival_time;
+            int wait = turnaround - processes[pid].burst_time;
+            waiting_time += wait;
+            turnaround_time += turnaround;
+        }
+
+        current_time++;
+    }
+
+    float avg_waiting_time = (float) waiting_time / num_processes;
+    float avg_turnaround_time = (float) turnaround_time / num_processes;
+
+    printf("Average Waiting Time: %.2f ms\n", avg_waiting_time);
+    printf("Average Turnaround Time: %.2f ms\n", avg_turnaround_time);
+}
+
+int main() {
+    processes[0] = (struct process) {1, 0, 5, 5};
+    processes[1] = (struct process) {2, 1, 3, 3};
+    processes[2] = (struct process) {3, 2, 3, 3};
+    processes[3] = (struct process) {4, 4, 1, 1};
+
+    num_processes = 4;
+
+    run_srpt_algorithm();
+
+    return 0;
+}
